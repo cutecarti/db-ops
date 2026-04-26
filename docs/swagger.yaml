@@ -1,0 +1,138 @@
+basePath: /
+definitions:
+  dto.CreateRecordRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  dto.RecordResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  dto.UpdateRecordRequest:
+    properties:
+      name:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API for records.
+  title: DB Ops API
+  version: "1.0"
+paths:
+  /records:
+    post:
+      consumes:
+      - application/json
+      description: Create new record
+      parameters:
+      - description: record data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateRecordRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RecordResponse'
+        "400":
+          description: invalid request body
+          schema:
+            type: string
+        "500":
+          description: failed to create record
+          schema:
+            type: string
+      summary: Create record
+      tags:
+      - records
+  /records/{id}:
+    delete:
+      description: Delete record by ID
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: invalid id
+          schema:
+            type: string
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Delete record
+      tags:
+      - records
+    get:
+      description: Get record
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.RecordResponse'
+        "400":
+          description: invalid id
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+      summary: Get record by ID
+      tags:
+      - records
+    put:
+      consumes:
+      - application/json
+      description: Update record by ID
+      parameters:
+      - description: Record ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: record data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateRecordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: invalid request body
+          schema:
+            type: string
+        "500":
+          description: failed to update record
+          schema:
+            type: string
+      summary: Update record
+      tags:
+      - records
+swagger: "2.0"
