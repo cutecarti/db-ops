@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cutecarti/db-ops/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -21,7 +20,7 @@ func NewRecordRepo(pool *pgxpool.Pool) *RecordRepo {
 
 func (r *RecordRepo) CreateRecord(ctx context.Context, record models.Record) (int, error) {
 	var id int
-	err := r.pool.QueryRow(ctx, "INSERT INTO records (name) VALUES ($1) RETURNING id", record.Name).Scan(&id)
+	err := r.pool.QueryRow(ctx, CREATE_QUERRY, record.Name).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -30,10 +29,10 @@ func (r *RecordRepo) CreateRecord(ctx context.Context, record models.Record) (in
 
 func (r *RecordRepo) GetRecord(ctx context.Context, id int) (models.Record, error) {
 	var record models.Record
-	err := r.pool.QueryRow(ctx, "SELECT id, name FROM records WHERE id = $1", id).Scan(&record.ID, &record.Name)
+	err := r.pool.QueryRow(ctx, GET_QUERRY, id).Scan(&record.ID, &record.Name)
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return models.Record{}, fmt.Errorf("Not found")
+			return models.Record{}, ErrRecordNotFound
 		}
 		return models.Record{}, err
 	}
@@ -41,25 +40,24 @@ func (r *RecordRepo) GetRecord(ctx context.Context, id int) (models.Record, erro
 }
 
 func (r *RecordRepo) DeleteRecord(ctx context.Context, id int) error {
-	cmdTag, err := r.pool.Exec(ctx, "DELETE FROM records WHERE id = $1", id)
+	cmdTag, err := r.pool.Exec(ctx, DELETE_QUERRY, id)
 	if err != nil {
-
 		return err
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return fmt.Errorf("Not found")
+		return ErrRecordNotFound
 	}
 	return nil
 }
 
 func (r *RecordRepo) UpdateRecord(ctx context.Context, id int, name string) error {
-	cmdTag, err := r.pool.Exec(ctx, "UPDATE records SET name = $1 WHERE id = $2", name, id)
+	cmdTag, err := r.pool.Exec(ctx, UPDATE_QUERRY, name, id)
 	if err != nil {
 
 		return err
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return fmt.Errorf("Not found")
+		return ErrRecordNotFound
 	}
 	return nil
 }

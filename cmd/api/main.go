@@ -16,8 +16,9 @@ func init() {
 // @title DB Ops API
 // @version 1.0
 // @description API for records.
-// @host localhost:8000
+// @host localhost:80
 // @BasePath /
+// @schemes http
 func main() {
 	app.Run()
 }

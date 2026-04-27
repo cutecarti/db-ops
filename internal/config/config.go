@@ -29,6 +29,6 @@ func GetCfg(ctx context.Context) (*Settings, error) {
 	}
 
 	return &Settings{
-		DB_URL: "postgres://" + user + ":" + password + "@" + "db:" + port + "/" + db_name,
+		DB_URL: "postgres://" + user + ":" + password + "@" + "db:" + port + "/" + db_name + "?sslmode=disable",
 	}, nil
 }
