@@ -17,7 +17,7 @@ definitions:
       name:
         type: string
     type: object
-host: localhost:8000
+host: localhost:80
 info:
   contact: {}
   description: API for records.
@@ -135,4 +135,6 @@ paths:
       summary: Update record
       tags:
       - records
+schemes:
+- http
 swagger: "2.0"

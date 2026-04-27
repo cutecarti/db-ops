@@ -1,12 +1,15 @@
 package handlers
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/cutecarti/db-ops/internal/delivery/http/dto"
+	"github.com/cutecarti/db-ops/internal/delivery/http/request"
+	"github.com/cutecarti/db-ops/internal/delivery/http/response"
 	"github.com/cutecarti/db-ops/internal/models"
+	"github.com/cutecarti/db-ops/internal/repository"
 	"github.com/cutecarti/db-ops/internal/service"
 )
 
@@ -32,16 +35,14 @@ func NewRecordHandler(service *service.DBService) *RecordHandler {
 func (h *RecordHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var req dto.CreateRecordRequest
-
-	err := json.NewDecoder(r.Body).Decode(&req)
+	req, err := request.DecodeJSON[dto.CreateRecordRequest](r)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		response.Error(w, 400, "invalid request body")
 		return
 	}
 
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		response.Error(w, 400, "name is required")
 		return
 	}
 
@@ -51,22 +52,17 @@ func (h *RecordHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.service.CreateRecord(ctx, record)
 	if err != nil {
-		http.Error(w, "Failed to create record", http.StatusInternalServerError)
+		response.Error(w, 500, err.Error())
 	}
 
-	resp := dto.RecordResponse{
+	response.JSON(w, 201, dto.RecordResponse{
 		ID:   id,
 		Name: req.Name,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	})
 }
 
 func (h *RecordHandler) Home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode("Home page")
+	response.JSON(w, 200, "Home page")
 }
 
 // GetRecord godoc
@@ -89,14 +85,17 @@ func (h *RecordHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	record, err := h.service.GetRecord(ctx, id)
-
-	resp := dto.RecordResponse{
-		ID:   record.ID,
-		Name: record.Name,
+	if err != nil {
+		if errors.Is(repository.ErrRecordNotFound, err) {
+			response.Error(w, 404, err.Error())
+		}
+		response.Error(w, 500, err.Error())
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	response.JSON(w, 200, dto.RecordResponse{
+		ID:   record.ID,
+		Name: record.Name,
+	})
 
 }
 
@@ -114,18 +113,20 @@ func (h *RecordHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "Invalid id", http.StatusBadRequest)
+		response.Error(w, 400, "Id is required")
 		return
 	}
 
 	err = h.service.DeleteRecord(ctx, id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(repository.ErrRecordNotFound, err) {
+			response.Error(w, 404, err.Error())
+		}
+		response.Error(w, 500, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNoContent)
+	response.JSON(w, 204, "")
 }
 
 // UpdateRecord godoc
@@ -144,25 +145,26 @@ func (h *RecordHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "Invalid id", http.StatusBadRequest)
+		response.Error(w, 400, "invalid id")
 		return
 	}
-	var req dto.UpdateRecordRequest
-
-	err = json.NewDecoder(r.Body).Decode(&req)
+	req, err := request.DecodeJSON[dto.UpdateRecordRequest](r)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		response.Error(w, 400, "invalid request body")
 		return
 	}
 
 	if req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+		response.Error(w, 400, "name is required")
 		return
 	}
 
 	err = h.service.UpdateRecord(ctx, id, req.Name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if errors.Is(repository.ErrRecordNotFound, err) {
+			response.Error(w, 404, err.Error())
+		}
+		response.Error(w, 500, err.Error())
 		return
 	}
 

@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +25,7 @@ func MakeNewPool(ctx context.Context, db_url string) (*pgxpool.Pool, error) {
 
 func RunMigrations(databaseURL string) error {
 	m, err := migrate.New(
-		"file://internal/db/migrations",
+		"file://internal/repository/db/migrations",
 		databaseURL,
 	)
 	if err != nil {
